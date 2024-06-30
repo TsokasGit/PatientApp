@@ -1,0 +1,104 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define LOWERLIMIT 70
+#define UPPERLIMIT 120
+#define MAX_PATIENTS 100
+
+typedef struct {
+    long id;
+    int age;
+    float glucose;
+} patientT;
+
+int calculateGlucose(float glucose);
+void getStatistics(patientT patientsTable[], int count, int *countLess, int *countUp);
+void readInput(patientT newPatients[], const char *filename);
+void addPatient(patientT patients[], int *patientCount);
+
+int main() {
+    patientT newPatients[MAX_PATIENTS];
+    int newPatientCount = 0;
+
+    // Read new patients from the file
+    readInput(newPatients, "patients.csv");
+
+    // Add a new patient through user input
+    addPatient(newPatients, &newPatientCount);
+
+    // Print the new patients
+    printf("New patients including user input:\n");
+    for(int i = 0; i < newPatientCount; i++){
+        printf("Patient ID: %ld, Age: %d, Glucose: %.2f, Status: %s\n",
+               newPatients[i].id, newPatients[i].age, newPatients[i].glucose,
+               calculateGlucose(newPatients[i].glucose) == 0 ? "Hypoglycemy" :
+               calculateGlucose(newPatients[i].glucose) == 2 ? "Hyperglycemy" : "Normal");
+    }
+
+    // Calculate statistics for new patients
+    int countLess = 0;
+    int countUp = 0;
+    getStatistics(newPatients, newPatientCount, &countLess, &countUp);
+
+    printf("\nNumber of patients with glucose less than LOWERLIMIT: %d\n", countLess);
+    printf("Number of patients with glucose greater than UPPERLIMIT: %d\n", countUp);
+
+    return 0;
+}
+
+int calculateGlucose(float glucose){
+    if(glucose < LOWERLIMIT){
+        return 0; // Hypoglycemy
+    } else if(glucose > UPPERLIMIT){
+        return 2; // Hyperglycemy
+    } else {
+        return 1; // Normal
+    }
+}
+
+void getStatistics(patientT patientsTable[], int count, int *countLess, int *countUp) {
+    for(int i = 0; i < count; i++){
+        if(calculateGlucose(patientsTable[i].glucose) == 0){
+            (*countLess)++;
+        }
+        if(calculateGlucose(patientsTable[i].glucose) == 2){
+            (*countUp)++;
+        }
+    }
+}
+
+void readInput(patientT newPatients[], const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        perror("Unable to open file");
+        return;
+    }
+
+    int i = 0;
+    while(fscanf(file, "%ld, %d, %f", &newPatients[i].id, &newPatients[i].age, &newPatients[i].glucose) == 3) {
+        printf("Patient ID: %ld, Age: %d, Glucose: %.2f, Status: %s\n",
+               newPatients[i].id, newPatients[i].age, newPatients[i].glucose,
+               calculateGlucose(newPatients[i].glucose) == 0 ? "Hypoglycemy" :
+               calculateGlucose(newPatients[i].glucose) == 2 ? "Hyperglycemy" : "Normal");
+        i++;
+    }
+
+    fclose(file);
+}
+
+void addPatient(patientT patients[], int *patientCount) {
+    printf("Enter new patient details:\n");
+    printf("ID: ");
+    scanf("%ld", &patients[*patientCount].id);
+    printf("Age: ");
+    scanf("%d", &patients[*patientCount].age);
+    printf("Glucose: ");
+    scanf("%f", &patients[*patientCount].glucose);
+
+    printf("New patient added - ID: %ld, Age: %d, Glucose: %.2f, Status: %s\n",
+           patients[*patientCount].id, patients[*patientCount].age, patients[*patientCount].glucose,
+           calculateGlucose(patients[*patientCount].glucose) == 0 ? "Hypoglycemy" :
+           calculateGlucose(patients[*patientCount].glucose) == 2 ? "Hyperglycemy" : "Normal");
+
+    (*patientCount)++;
+}
